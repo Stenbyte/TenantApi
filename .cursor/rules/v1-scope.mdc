@@ -1,0 +1,34 @@
+---
+description: Locked V1 product scope — laundry booking MVP for Denmark landlords/tenants
+alwaysApply: true
+---
+
+# V1 scope (locked)
+
+Product: Denmark tenant/landlord laundry booking. Progressive web direction long-term; V1 is browser web. Local-first. No Azure deploy until landlord panel basics exist. Free-tier when deploy later.
+
+## In scope
+
+1. Re-establish local Postgres (runtime, connection string, migrations) — document setup in README if missing.
+2. Finish Mongo → Postgres cutover (auth/bookings/tenants must not depend on Mongo).
+3. Refresh tokens persisted in Postgres; verify cookie auth (HttpOnly/Secure/SameSite) during that work — including mobile Safari checks later when testing phone browser.
+4. Book + cancel laundry slots end-to-end on Postgres.
+5. No double booking: DB uniqueness/concurrency on slot + tests.
+6. Tenant isolation: shared DB + tenant/building key on rows + enforced filters + integration tests. No separate-schema / RLS in V1.
+7. Landlord creates tenant accounts (option A) — allowlist only; no open self-serve signup for booking users.
+8. BuildingSettings foundation: slot length, max bookings/week (even if UI is minimal).
+9. API + Web versioning basics (not Danish i18n yet).
+10. Tests on auth + booking isolation paths.
+11. Landlord panel only as far as: manage tenants + see bookings.
+12. Booking + auth usable on phone browser: responsive breakpoints so core flows work on small screens (same codebase; no separate mobile app). Desktop can stay primary for landlord panel polish.
+
+## Out of scope (V2+)
+
+Full PWA install/offline, distinct mobile-only UI redesign, Danish i18n, notice board, slot trading, Face ID, photo fault reports, varmemester forward, CSV/PDF regnskab, App Insights/alerts, IP banlists, schema-per-tenant, RLS, cold-start ping cron, payment/Bogføringslov, native apps.
+
+## Defaults when unsure
+
+- Ship simplest correct isolation and invite model.
+- One web codebase; layout changes via screen size (responsive), not a second app.
+- Attach learning to a shippable outcome (no orphan “learn YAML” tickets).
+- Update `ROADMAP.md` checkboxes when a milestone lands — do not expand V1 without Sten explicitly unlocking scope.
