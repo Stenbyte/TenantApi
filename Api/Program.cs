@@ -10,9 +10,6 @@ using Microsoft.IdentityModel.Tokens;
 using AspNetCoreRateLimit;
 using TenantApi.Repository;
 using LaundryBooking.Services;
-using Microsoft.Extensions.Options;
-using MongoDB.Driver;
-using Npgsql;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
@@ -114,10 +111,6 @@ builder.Services.AddAuthentication(options => {
     };
 });
 
-builder.Services.Configure<MongoDBSettings>(
-    builder.Configuration.GetSection("MongoDB"));
-
-
 if (!builder.Environment.IsProduction())
 {
     builder.Services.Configure<PostgresSettings>(
@@ -131,12 +124,6 @@ if (!builder.Environment.IsProduction())
     });
 }
 
-
-
-builder.Services.AddSingleton(sp => {
-    var settings = sp.GetRequiredService<IOptions<MongoDBSettings>>().Value;
-    return new MongoClient(settings.ConnectionString);
-});
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<ITenantRepository, TenantRepository>();
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
@@ -175,24 +162,21 @@ var app = builder.Build();
 
 
 
-var scope = app.Services.CreateScope();
-var tenantService = scope.ServiceProvider.GetRequiredService<ITenantService>();
-try
+if (!builder.Environment.IsProduction())
 {
-    var dataBase = tenantService.TestConnection();
-
-    if (!builder.Environment.IsProduction())
+    var scope = app.Services.CreateScope();
+    var tenantService = scope.ServiceProvider.GetRequiredService<ITenantService>();
+    try
     {
         var pgStatus = tenantService.TestPgConnectionWithDbContext();
-        Console.WriteLine($"++++++++++🍏🍏🍏${pgStatus}++++++++++++++");
+        Console.WriteLine($"++++++++++🍏🍏🍏{pgStatus}++++++++++++++");
     }
-    Console.WriteLine($"++++++++++🍏🍏🍏 Test Connection to MongoDB: ${dataBase}++++++++++++++");
-}
-catch (Exception ex)
-{
-    Console.Error.WriteLine("------------🍎🍎🍎 Startup connection test failed ------------");
-    Console.Error.WriteLine(ex);
-    throw;
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine("------------🍎🍎🍎 Startup Postgres connection test failed ------------");
+        Console.Error.WriteLine(ex);
+        throw;
+    }
 }
 
 if (app.Environment.IsProduction())

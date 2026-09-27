@@ -1,32 +1,20 @@
-
 using TenantApi.Exceptions;
 using TenantApi.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using MongoDB.Driver;
 
 namespace TenantApi.Repository;
 
 public class UserRepository : IUserRepository
 {
-    private readonly IMongoDatabase _laundryDb;
-    private readonly IMongoCollection<User> _userCollection;
-
     private readonly TenantDbContext _dbContext;
 
-    public UserRepository(MongoClient _client, IOptions<MongoDBSettings> mongoSettings, TenantDbContext dbContext)
+    public UserRepository(TenantDbContext dbContext)
     {
-        _laundryDb = _client.GetDatabase(mongoSettings.Value.DatabaseName);
-        _userCollection = _laundryDb.GetCollection<User>(mongoSettings.Value.UsersCollectionName);
-
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     }
 
-
-    public async Task CreateUser(User user)
-    {
-        await _userCollection.InsertOneAsync(user);
-    }
+    public Task CreateUser(User user)
+        => throw new CustomException("Mongo user store removed; use Postgres UserPg", null, 501);
 
     public async Task Create(UserPg user)
     {
@@ -34,29 +22,17 @@ public class UserRepository : IUserRepository
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<User> FindUserById(string userId)
-    {
-        var existingUser = await _userCollection.Find(user => user._id == userId).FirstOrDefaultAsync();
+    public Task<User> FindUserById(string userId)
+        => throw new CustomException("Mongo user store removed; use Postgres UserPg", null, 501);
 
-        return existingUser;
-    }
+    public Task<User> FindExistingUserWithDbName(User newUser)
+        => throw new CustomException("Mongo user store removed; use Postgres UserPg", null, 501);
 
-    public async Task<User> FindExistingUserWithDbName(User newUser)
-    {
-        var existingUserWithDbName = await _userCollection.Find(user => user.adress.streetName == newUser.adress.streetName && user.adress.buildingNumber == newUser.adress.buildingNumber).FirstOrDefaultAsync();
-
-        return existingUserWithDbName;
-    }
-    public async Task<User> FindUserByRefreshToken(string refreshToken)
-    {
-        var existingUser = await _userCollection.Find(user => user.refreshToken == refreshToken).FirstOrDefaultAsync();
-
-        return existingUser;
-    }
+    public Task<User> FindUserByRefreshToken(string refreshToken)
+        => throw new CustomException("Mongo user store removed; use Postgres UserPg", null, 501);
 
     public async Task<UserPg> FindUserByEmail(string? email)
     {
-
         if (email == null || email.Length == 0)
         {
             throw new CustomException("Email is required", null, 400);

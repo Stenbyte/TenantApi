@@ -7,11 +7,15 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/Api/TenantApi.csproj",
+                "${workspaceFolder:TenantAppApi}/Api/TenantApi.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
             ],
-            "problemMatcher": "$msCompile"
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         },
         {
             "label": "publish",
@@ -19,21 +23,9 @@
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/Api/TenantApi.csproj",
+                "${workspaceFolder:TenantAppApi}/Api/TenantApi.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "watch",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "watch",
-                "run",
-                "--project",
-                "${workspaceFolder}/Api/TenantApi.csproj"
             ],
             "problemMatcher": "$msCompile"
         }
