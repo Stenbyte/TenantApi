@@ -2,58 +2,24 @@
     "version": "0.2.0",
     "configurations": [
         {
-            // Use IntelliSense to find out which attributes exist for C# debugging
-            // Use hover for the description of the existing attributes
-            // For further information visit https://github.com/dotnet/vscode-csharp/blob/main/debugger-launchjson.md.
-            "name": ".NET Core Launch (web)",
+            "name": "API: Launch (Development)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/Api/bin/Debug/net9.0/TenantApi.dll",
+            "program": "${workspaceFolder:TenantAppApi}/Api/bin/Debug/net9.0/TenantApi.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/Api",
+            "cwd": "${workspaceFolder:TenantAppApi}/Api",
             "stopAtEntry": false,
-            // Enable launching a web browser when ASP.NET Core starts. For more information: https://aka.ms/VSCode-CS-LaunchJson-WebBrowser
+            "console": "integratedTerminal",
+            "launchSettingsProfile": "http",
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
-            },
-            "sourceFileMap": {
-                "/Views": "${workspaceFolder}/Views"
             }
         },
         {
-            "name": ".NET Core Attach",
+            "name": "API: Attach",
             "type": "coreclr",
             "request": "attach"
-        },
-        {
-            "name": ".NET Launch (Development)",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/yApi/bin/Debug/net9.0/TenantApi.dll",
-            "args": [],
-            "cwd": "${workspaceFolder}/Api",
-            "stopAtEntry": false,
-            "env": {
-              "ASPNETCORE_ENVIRONMENT": "Development"
-            },
-            "console": "internalConsole"
-          },
-          {
-            "name": ".NET Launch (Production)",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Api/bin/Debug/net9.0/TenantApi.dll",
-            "args": [],
-            "cwd": "${workspaceFolder}/Api",
-            "stopAtEntry": false,
-            "env": {
-              "ASPNETCORE_ENVIRONMENT": "Production"
-            },
-            "console": "internalConsole"
-          }
+        }
     ]
 }
