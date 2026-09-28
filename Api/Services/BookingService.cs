@@ -33,6 +33,11 @@ namespace LaundryBooking.Services
             await _bookingRepository.DeleteBookingForUser(userId, bookingId);
         }
 
+        public async Task<int> CancelAllBookings(Guid userId)
+        {
+            return await _bookingRepository.CancelAllBookingsForUser(userId);
+        }
+
         public async Task<List<MachineDto>> GetMachinesForUserBuilding(Guid userId)
         {
             var buildingId = await RequireBuildingId(userId);

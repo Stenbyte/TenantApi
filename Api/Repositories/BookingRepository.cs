@@ -169,6 +169,22 @@ public class BookingRepository : IBookingRepository
         await _dbContext.SaveChangesAsync();
     }
 
+    public async Task<int> CancelAllBookingsForUser(Guid userId)
+    {
+        var bookings = await _dbContext.Bookings
+            .Where(b => b.UserId == userId)
+            .ToListAsync();
+
+        if (bookings.Count == 0)
+        {
+            return 0;
+        }
+
+        _dbContext.Bookings.RemoveRange(bookings);
+        await _dbContext.SaveChangesAsync();
+        return bookings.Count;
+    }
+
     private static bool IsUniqueViolation(DbUpdateException ex)
         => ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
