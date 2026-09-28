@@ -13,23 +13,11 @@ public class UserRepository : IUserRepository
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     }
 
-    public Task CreateUser(User user)
-        => throw new CustomException("Mongo user store removed; use Postgres UserPg", null, 501);
-
     public async Task Create(UserPg user)
     {
         _dbContext.Users.Add(user);
         await _dbContext.SaveChangesAsync();
     }
-
-    public Task<User> FindUserById(string userId)
-        => throw new CustomException("Mongo user store removed; use Postgres UserPg", null, 501);
-
-    public Task<User> FindExistingUserWithDbName(User newUser)
-        => throw new CustomException("Mongo user store removed; use Postgres UserPg", null, 501);
-
-    public Task<User> FindUserByRefreshToken(string refreshToken)
-        => throw new CustomException("Mongo user store removed; use Postgres UserPg", null, 501);
 
     public async Task<UserPg?> FindUserByEmail(string? email)
     {
@@ -39,6 +27,16 @@ public class UserRepository : IUserRepository
         }
 
         return await _dbContext.Users.FirstOrDefaultAsync(u => u!.Email! == email);
+    }
+
+    public async Task<UserPg?> FindUserByRefreshToken(string refreshToken)
+    {
+        if (string.IsNullOrEmpty(refreshToken))
+        {
+            return null;
+        }
+
+        return await _dbContext.Users.FirstOrDefaultAsync(u => u.refreshToken == refreshToken);
     }
 
     public async Task UpdateUser(UserPg userToUpdate)
