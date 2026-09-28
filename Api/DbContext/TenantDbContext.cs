@@ -11,6 +11,7 @@ public class TenantDbContext : DbContext
     public DbSet<UserProperty> UserProperties { get; set; }
     public DbSet<Machine> Machines { get; set; }
     public DbSet<BookingPg> Bookings { get; set; }
+    public DbSet<BuildingSettings> BuildingSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -49,6 +50,17 @@ public class TenantDbContext : DbContext
             e.Property(m => m.Status).HasConversion<string>().HasMaxLength(32);
 
             e.HasIndex(m => new { m.BuildingId, m.Name });
+        });
+
+        modelBuilder.Entity<BuildingSettings>(e =>
+        {
+            e.HasOne(s => s.Building)
+                .WithOne()
+                .HasForeignKey<BuildingSettings>(s => s.BuildingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.Property(s => s.MaxBookingsPerWeek).HasDefaultValue(3);
+            e.Property(s => s.SlotLengthMinutes).HasDefaultValue(180);
         });
 
         modelBuilder.Entity<BookingPg>(e =>

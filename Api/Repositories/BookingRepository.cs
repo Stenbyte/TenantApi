@@ -90,6 +90,7 @@ public class BookingRepository : IBookingRepository
         }
 
         await EnsureDefaultMachines(buildingId);
+        await EnforceMaxBookings(userId, buildingId);
 
         Machine? machine;
         if (request.MachineId.HasValue)
@@ -183,6 +184,35 @@ public class BookingRepository : IBookingRepository
         _dbContext.Bookings.RemoveRange(bookings);
         await _dbContext.SaveChangesAsync();
         return bookings.Count;
+    }
+
+    private async Task EnforceMaxBookings(Guid userId, Guid buildingId)
+    {
+        var settings = await GetOrCreateBuildingSettings(buildingId);
+
+        var count = await _dbContext.Bookings.CountAsync(b => b.UserId == userId);
+
+        if (count >= settings.MaxBookingsPerWeek)
+        {
+            // Exact string — FE toast matches this.
+            throw new CustomException("You can not add new reservation", null, 403);
+        }
+    }
+
+    private async Task<BuildingSettings> GetOrCreateBuildingSettings(Guid buildingId)
+    {
+        var settings = await _dbContext.BuildingSettings
+            .FirstOrDefaultAsync(s => s.BuildingId == buildingId);
+
+        if (settings is not null)
+        {
+            return settings;
+        }
+
+        settings = new BuildingSettings { BuildingId = buildingId };
+        _dbContext.BuildingSettings.Add(settings);
+        await _dbContext.SaveChangesAsync();
+        return settings;
     }
 
     private static bool IsUniqueViolation(DbUpdateException ex)
