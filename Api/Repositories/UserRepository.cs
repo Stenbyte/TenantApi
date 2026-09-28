@@ -54,7 +54,7 @@ public class UserRepository : IUserRepository
         return existingUser;
     }
 
-    public async Task<UserPg> FindUserByEmail(string? email)
+    public async Task<UserPg?> FindUserByEmail(string? email)
     {
 
         if (email == null || email.Length == 0)
@@ -62,13 +62,7 @@ public class UserRepository : IUserRepository
             throw new CustomException("Email is required", null, 400);
         }
 
-        UserPg? existingUser = await _dbContext.Users.FirstOrDefaultAsync(u => u!.Email! == email);
-
-        if (existingUser is null)
-        {
-            throw new CustomException("User not found", null, 404);
-        }
-        return existingUser!;
+        return await _dbContext.Users.FirstOrDefaultAsync(u => u!.Email! == email);
     }
 
     public async Task UpdateUser(UserPg userToUpdate)

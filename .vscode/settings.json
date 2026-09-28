@@ -3,7 +3,7 @@
     "editor.formatOnSave": true
   },
   "editor.formatOnSave": true,
-  "dotnet.server.useOmnisharp": true,
+  "dotnet.server.useOmnisharp": false,
   "workbench.colorCustomizations": {
     "activityBar.activeBackground": "#dc1bfa8e",
     "activityBar.background": "#dc1bfa8e",
