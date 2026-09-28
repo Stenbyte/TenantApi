@@ -1,6 +1,5 @@
 using FluentValidation;
 using TenantApi.Dto;
-using TenantApi.Exceptions;
 using TenantApi.Models;
 
 namespace TenantApi.Validators
@@ -27,8 +26,6 @@ namespace TenantApi.Validators
             .Matches(@"[@$!%*?&]").WithMessage("Password must contain at least one special character");
 
             RuleFor(x => x.Email).NotEmpty().WithMessage("email is required").Matches(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").WithMessage("Invalid email format");
-
-            // RuleFor(x => x.phoneNumber).SetValidator(new PhoneNumberValidator());
         }
     }
 
@@ -56,22 +53,6 @@ namespace TenantApi.Validators
         }
     }
 
-    public class PhoneNumberValidator : AbstractValidator<PhoneNumber>
-    {
-        public PhoneNumberValidator()
-        {
-            RuleFor(x => x.countryCode).NotEmpty()
-            .WithMessage("Country code is required")
-            .Matches(@"^\+\d{1,4}$")
-            .WithMessage("Invalid country code format (e.g., +45)");
-
-            RuleFor(x => x.number).NotEmpty()
-            .WithMessage("Number is required")
-            .Matches(@"^\d{6,15}$")
-            .WithMessage("number must be between 6 - 15 digits");
-        }
-    }
-
     public class AdressValidator : AbstractValidator<AdressDto>
     {
         public AdressValidator()
@@ -85,46 +66,4 @@ namespace TenantApi.Validators
             .WithMessage("House Number is required");
         }
     }
-
-    public class TimeSlotValidator
-    {
-        public static bool IsTimeSlotInThePast(List<string> timeSlot)
-        {
-
-            var nowUtc = DateTime.UtcNow;
-            string[] timeParts = timeSlot[0].Split("-");
-            var endTime = timeParts[1];
-            var endHour = int.Parse(endTime.Split(":")[0]);
-            var endMinute = int.Parse(endTime.Split(":")[1]);
-
-            var slotEndUtc = DateTime.UtcNow.AddHours(endHour).AddMinutes(endMinute);
-            return slotEndUtc < nowUtc;
-        }
-        public static void IsTimeSlotInThePast(DateTime time)
-        {
-
-            var nowUtc = DateTime.UtcNow;
-
-            var slotEndUtc = time.ToUniversalTime();
-            if (slotEndUtc < nowUtc)
-            {
-                throw new CustomException("Cannot create a reservation for a past time", null, 400);
-            }
-        }
-
-        public static void IsBookingHoursWithinRange(DateTime startTime, DateTime endTime)
-        {
-            DateTime _startTime = startTime;
-            DateTime _endTime = endTime;
-
-            int startHour = _startTime.Hour;
-            int endHour = _endTime.Hour;
-            bool isInRange = startHour >= 8 & endHour <= 20;
-            if (!isInRange)
-            {
-                throw new CustomException("Time is not within the range", null, 400);
-            }
-        }
-    }
-
 }

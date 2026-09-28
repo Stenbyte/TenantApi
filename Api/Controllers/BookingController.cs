@@ -13,7 +13,6 @@ namespace TenantApi.Laundry.Controllers
     [Authorize]
     public class BookingController(IBookingService bookingService) : AppControllerBase
     {
-        private const string NotMigrated = "Bookings not migrated to Postgres yet";
         private readonly IBookingService _bookingService = bookingService;
 
         [HttpGet("getAll")]
@@ -39,10 +38,6 @@ namespace TenantApi.Laundry.Controllers
             var booking = await _bookingService.CreateBooking(userId, request);
             return CreatedAtAction(nameof(GetAllBookings), new { machineId = booking.MachineId }, booking);
         }
-
-        [HttpPost("createnew")]
-        public IActionResult CreateBookingNew()
-            => StatusCode(StatusCodes.Status501NotImplemented, new { message = NotMigrated });
 
         [HttpPost("edit")]
         public async Task<IActionResult> EditBookingById([FromBody] EditBookingRequest request)
