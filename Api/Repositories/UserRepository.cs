@@ -53,4 +53,13 @@ public class UserRepository : IUserRepository
 
         await _dbContext.SaveChangesAsync();
     }
+
+    public async Task<Guid?> GetBuildingIdForUser(Guid userId)
+    {
+        return await _dbContext.UserProperties
+            .AsNoTracking()
+            .Where(up => up.UserId == userId)
+            .Select(up => (Guid?)up.Property.BuildingId)
+            .FirstOrDefaultAsync();
+    }
 }
