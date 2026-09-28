@@ -24,9 +24,17 @@ namespace TenantApi.Auth.Controllers
         private readonly LogOutValidator _logOutValidator;
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _cache;
+        private readonly IWebHostEnvironment _env;
 
 
-        public AuthController(JwtService jwtService, LoginValidator validator, IConfiguration configuration, LogOutValidator logOutValidator, IMemoryCache cache, IUserService userService)
+        public AuthController(
+            JwtService jwtService,
+            LoginValidator validator,
+            IConfiguration configuration,
+            LogOutValidator logOutValidator,
+            IMemoryCache cache,
+            IUserService userService,
+            IWebHostEnvironment env)
         {
             _cache = cache;
             _jwtService = jwtService;
@@ -34,6 +42,23 @@ namespace TenantApi.Auth.Controllers
             _configuration = configuration;
             _logOutValidator = logOutValidator;
             _userService = userService;
+            _env = env;
+        }
+
+        private CookieOptions RefreshCookieOptions(DateTimeOffset? expires = null)
+        {
+            var options = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = !_env.IsDevelopment(),
+                SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
+                Path = "/api/auth"
+            };
+            if (expires.HasValue)
+            {
+                options.Expires = expires;
+            }
+            return options;
         }
 
         [HttpPost("login")]
@@ -75,13 +100,10 @@ namespace TenantApi.Auth.Controllers
 
             new HelperFunctions().ResetFailedAttempts(request.Email, _cache);
 
-            Response.Cookies.Append("refresh_token", refreshToken, new CookieOptions {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTime.UtcNow.AddDays(double.Parse(jwtSettings["RefreshTokenExpirationDays"]!)),
-                Path = "/api/auth"
-            });
+            Response.Cookies.Append(
+                "refresh_token",
+                refreshToken,
+                RefreshCookieOptions(DateTime.UtcNow.AddDays(double.Parse(jwtSettings["RefreshTokenExpirationDays"]!))));
 
             return Ok(new { token });
         }
@@ -100,13 +122,7 @@ namespace TenantApi.Auth.Controllers
                 await _userService.UpdateUser(existingUser);
             }
 
-            var cookieOptions = new CookieOptions {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Path = "/api/auth"
-            };
-            Response.Cookies.Delete("refresh_token", cookieOptions);
+            Response.Cookies.Delete("refresh_token", RefreshCookieOptions());
 
             return Ok(new { message = "Logged out" });
         }
@@ -149,13 +165,10 @@ namespace TenantApi.Auth.Controllers
 
             await _userService.UpdateUser(user);
 
-            Response.Cookies.Append("refresh_token", newRefreshToken, new CookieOptions {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTime.UtcNow.AddDays(double.Parse(jwtSettings["RefreshTokenExpirationDays"]!)),
-                Path = "/api/auth"
-            });
+            Response.Cookies.Append(
+                "refresh_token",
+                newRefreshToken,
+                RefreshCookieOptions(DateTime.UtcNow.AddDays(double.Parse(jwtSettings["RefreshTokenExpirationDays"]!))));
 
             return Ok(new { accessToken = newAccessToken });
         }

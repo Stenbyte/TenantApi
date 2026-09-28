@@ -13,38 +13,30 @@ public class UserRepository : IUserRepository
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     }
 
-    public Task CreateUser(User user)
-        => throw new CustomException("Mongo user store removed; use Postgres UserPg", null, 501);
-
     public async Task Create(UserPg user)
     {
         _dbContext.Users.Add(user);
         await _dbContext.SaveChangesAsync();
     }
 
-    public Task<User> FindUserById(string userId)
-        => throw new CustomException("Mongo user store removed; use Postgres UserPg", null, 501);
-
-    public Task<User> FindExistingUserWithDbName(User newUser)
-        => throw new CustomException("Mongo user store removed; use Postgres UserPg", null, 501);
-
-    public Task<User> FindUserByRefreshToken(string refreshToken)
-        => throw new CustomException("Mongo user store removed; use Postgres UserPg", null, 501);
-
-    public async Task<UserPg> FindUserByEmail(string? email)
+    public async Task<UserPg?> FindUserByEmail(string? email)
     {
         if (email == null || email.Length == 0)
         {
             throw new CustomException("Email is required", null, 400);
         }
 
-        UserPg? existingUser = await _dbContext.Users.FirstOrDefaultAsync(u => u!.Email! == email);
+        return await _dbContext.Users.FirstOrDefaultAsync(u => u!.Email! == email);
+    }
 
-        if (existingUser is null)
+    public async Task<UserPg?> FindUserByRefreshToken(string refreshToken)
+    {
+        if (string.IsNullOrEmpty(refreshToken))
         {
-            throw new CustomException("User not found", null, 404);
+            return null;
         }
-        return existingUser!;
+
+        return await _dbContext.Users.FirstOrDefaultAsync(u => u.refreshToken == refreshToken);
     }
 
     public async Task UpdateUser(UserPg userToUpdate)
