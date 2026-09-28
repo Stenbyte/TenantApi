@@ -1,7 +1,6 @@
 using TenantApi.Exceptions;
 using TenantApi.Repository;
 
-
 namespace TenantApi.Services
 {
     public class TenantService : ITenantService
@@ -11,18 +10,6 @@ namespace TenantApi.Services
         public TenantService(ITenantRepository repository)
         {
             _repository = repository;
-        }
-
-        public string TestConnection()
-        {
-            try
-            {
-                return _repository.TestConnection();
-            }
-            catch (CustomException ex)
-            {
-                throw new CustomException("DataBase connection failed", ex, 500);
-            }
         }
 
         public string TestPgConnectionWithDbContext()

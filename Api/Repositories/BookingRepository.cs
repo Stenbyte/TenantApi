@@ -1,85 +1,43 @@
-using System.Threading.Tasks;
+using TenantApi.Exceptions;
 using TenantApi.Models;
-using MongoDB.Driver;
 
 namespace TenantApi.Repository;
 
 class BookingRepository : IBookingRepository
 {
-    private readonly MongoClient _client;
+    private static CustomException NotMigrated()
+        => new("Bookings not migrated to Postgres yet", null, 501);
 
-    public BookingRepository(MongoClient client)
-    {
-        _client = client;
-    }
-    public IMongoCollection<T> GetCollection<T>(string dbName, string collectionName = "Booking")
-    {
-        return _client.GetDatabase(dbName).GetCollection<T>(collectionName);
-    }
-    public async Task<List<Booking>> GetAllBookingsByBuildingId(User user)
-    {
-        return await GetCollection<Booking>(user.dbName).Find(bookings => user.adress._id == bookings.buildingId).ToListAsync();
-    }
-    public async Task<List<Booking>> GetAllBookingsByMachineId(User user, string machineId)
-    {
-        var filter = Builders<Booking>.Filter.And(
-            Builders<Booking>.Filter.Eq(x => x.machineId, machineId),
-            Builders<Booking>.Filter.Eq(x => x.userId, user._id)
+    public Task<List<Booking>> GetAllBookingsByBuildingId(User user)
+        => throw NotMigrated();
 
-        );
-        return await GetCollection<Booking>(user.dbName).Find(filter).ToListAsync();
-    }
+    public Task<List<Booking>> GetAllBookingsByMachineId(User user, string machineId)
+        => throw NotMigrated();
 
-    public async Task<Booking> CreateBooking(Booking newBooking, string dbName)
-    {
-        await GetCollection<Booking>(dbName).InsertOneAsync(newBooking);
-        return newBooking;
-    }
+    public Task<Booking> CreateBooking(Booking newBooking, string dbName)
+        => throw NotMigrated();
 
-    public async Task<Booking> UpdateBooking(Booking existingBooking, string dbName)
-    {
-        var filter = Builders<Booking>.Filter.Eq(booking => booking._id, existingBooking._id);
-        var update = Builders<Booking>.Update.Set(booking => booking.slots, existingBooking.slots).
-        Set(booking => booking.reservationsLeft, existingBooking.reservationsLeft).Set(booking => booking.startTime, existingBooking.startTime);
+    public Task<Booking> UpdateBooking(Booking existingBooking, string dbName)
+        => throw NotMigrated();
 
-        await GetCollection<Booking>(dbName).UpdateOneAsync(filter, update);
-        return existingBooking;
-    }
+    public Task<Booking> GetBookingsByUserId(string userId, string dbName)
+        => throw NotMigrated();
 
-    public async Task<Booking> GetBookingsByUserId(string userId, string dbName)
-    {
-        return await GetCollection<Booking>(dbName).Find(booking => booking.userId == userId).FirstOrDefaultAsync();
-    }
+    public Task<Booking> FindByUserAndSlotId(string bookingSlotId, string userId, string dbName)
+        => throw NotMigrated();
 
-    public async Task<Booking> FindByUserAndSlotId(string bookingSlotId, string userId, string dbName)
-    {
-        return await GetCollection<Booking>(dbName).Find(b => b.userId == userId && b.slots.Any(slot => slot._id == bookingSlotId)).FirstOrDefaultAsync();
-    }
+    public Task<Booking> FindBookingsByUserId(string userId, string dbName)
+        => throw NotMigrated();
 
-    public async Task<Booking> FindBookingsByUserId(string userId, string dbName)
-    {
-        return await GetCollection<Booking>(dbName).Find(b => b.userId == userId).FirstOrDefaultAsync();
-    }
+    public Task<bool> CancelBooking(string userId, string dbName)
+        => throw NotMigrated();
 
-    public async Task<bool> CancelBooking(string userId, string dbName)
-    {
-        var result = await GetCollection<Booking>(dbName).DeleteOneAsync(b => b.userId == userId);
-        return result.DeletedCount > 0;
-    }
+    public Task<MachineModel> GetMachine(string dbName, string machineId)
+        => throw NotMigrated();
 
-    public async Task<MachineModel> GetMachine(string dbName, string machineId)
-    {
-        return await GetCollection<MachineModel>(dbName, "Machine").Find(machine => machine._id == machineId).FirstOrDefaultAsync();
-    }
+    public Task<List<MachineModel>> GetAllMachinesByBuildingId(User user)
+        => throw NotMigrated();
 
-    public async Task<List<MachineModel>> GetAllMachinesByBuildingId(User user)
-    {
-        return await GetCollection<MachineModel>(user.dbName, "Machine").Find(x => x.buildingId == user.adress._id).ToListAsync();
-    }
-
-    public async Task<MachineModel> CreateMachine(string dbName, MachineModel newMachine)
-    {
-        await GetCollection<MachineModel>(dbName, "Machine").InsertOneAsync(newMachine);
-        return newMachine;
-    }
+    public Task<MachineModel> CreateMachine(string dbName, MachineModel newMachine)
+        => throw NotMigrated();
 }

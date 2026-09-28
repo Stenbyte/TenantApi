@@ -1,21 +1,16 @@
 using TenantApi.Models;
 using TenantApi.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using TenantApi.Exceptions;
 using TenantApi.Validators;
 using TenantApi.Dto;
 
-
 namespace TenantApi.SignUp.Controllers
 {
     [Route("api/[controller]")]
-    public class SignUpController(IOptions<MongoDBSettings> mongoSettings, SignUpValidator signupValidator, IBookingService bookingService, IUserService userService) : ControllerBase
+    public class SignUpController(SignUpValidator signupValidator, IUserService userService) : ControllerBase
     {
-
         private readonly IUserService _userService = userService;
-        private readonly IBookingService _bookingService = bookingService;
-        private readonly IOptions<MongoDBSettings> _mongoSettings = mongoSettings;
         private readonly SignUpValidator _validator = signupValidator;
 
         [HttpPost]
@@ -36,8 +31,6 @@ namespace TenantApi.SignUp.Controllers
 
             var hashPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
             request.Password = hashPassword;
-
-
 
             Building building = new Building {
                 StreetName = request.adress.StreetName,
