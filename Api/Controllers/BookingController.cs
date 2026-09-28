@@ -16,24 +16,29 @@ namespace TenantApi.Laundry.Controllers
         private const string NotMigrated = "Bookings not migrated to Postgres yet";
         private readonly IBookingService _bookingService = bookingService;
 
-        /// <summary>
-        /// List bookings for the caller's building. Optional machineId filter.
-        /// </summary>
         [HttpGet("getAll")]
         public async Task<ActionResult<List<BookingDto>>> GetAllBookings([FromQuery] Guid? machineId = null)
         {
-            if (!Guid.TryParse(User.FindFirstValue(TenantClaims.UserId), out var userId))
-            {
-                throw new CustomException("Invalid user id", null, 401);
-            }
-
+            var userId = RequireUserId();
             var bookings = await _bookingService.GetBookingsForUserBuilding(userId, machineId);
             return Ok(bookings);
         }
 
+        [HttpGet("getAllMachines")]
+        public async Task<ActionResult<List<MachineDto>>> GetAllMachines()
+        {
+            var userId = RequireUserId();
+            var machines = await _bookingService.GetMachinesForUserBuilding(userId);
+            return Ok(machines);
+        }
+
         [HttpPost("create")]
-        public IActionResult CreateBooking()
-            => StatusCode(StatusCodes.Status501NotImplemented, new { message = NotMigrated });
+        public async Task<ActionResult<BookingDto>> CreateBooking([FromBody] CreateBookingRequest request)
+        {
+            var userId = RequireUserId();
+            var booking = await _bookingService.CreateBooking(userId, request);
+            return CreatedAtAction(nameof(GetAllBookings), new { machineId = booking.MachineId }, booking);
+        }
 
         [HttpPost("createnew")]
         public IActionResult CreateBookingNew()
@@ -47,8 +52,14 @@ namespace TenantApi.Laundry.Controllers
         public IActionResult CancelBookings()
             => StatusCode(StatusCodes.Status501NotImplemented, new { message = NotMigrated });
 
-        [HttpGet("getAllMachines")]
-        public IActionResult GetAllMachinesByBuildingId()
-            => StatusCode(StatusCodes.Status501NotImplemented, new { message = NotMigrated });
+        private Guid RequireUserId()
+        {
+            if (!Guid.TryParse(User.FindFirstValue(TenantClaims.UserId), out var userId))
+            {
+                throw new CustomException("Invalid user id", null, 401);
+            }
+
+            return userId;
+        }
     }
 }

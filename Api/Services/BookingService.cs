@@ -18,13 +18,31 @@ namespace LaundryBooking.Services
 
         public async Task<List<BookingDto>> GetBookingsForUserBuilding(Guid userId, Guid? machineId = null)
         {
+            var buildingId = await RequireBuildingId(userId);
+            return await _bookingRepository.GetBookingsByBuildingId(buildingId, machineId);
+        }
+
+        public async Task<BookingDto> CreateBooking(Guid userId, CreateBookingRequest request)
+        {
+            var buildingId = await RequireBuildingId(userId);
+            return await _bookingRepository.CreateBooking(userId, buildingId, request);
+        }
+
+        public async Task<List<MachineDto>> GetMachinesForUserBuilding(Guid userId)
+        {
+            var buildingId = await RequireBuildingId(userId);
+            return await _bookingRepository.GetMachinesByBuildingId(buildingId);
+        }
+
+        private async Task<Guid> RequireBuildingId(Guid userId)
+        {
             var buildingId = await _userRepository.GetBuildingIdForUser(userId);
             if (buildingId is null)
             {
                 throw new CustomException("User is not linked to a building", null, 404);
             }
 
-            return await _bookingRepository.GetBookingsByBuildingId(buildingId.Value, machineId);
+            return buildingId.Value;
         }
     }
 }
