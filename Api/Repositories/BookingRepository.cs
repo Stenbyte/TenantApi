@@ -145,6 +145,30 @@ public class BookingRepository : IBookingRepository
         return ToDto(booking);
     }
 
+    public async Task DeleteBookingForUser(Guid userId, Guid bookingId)
+    {
+        if (bookingId == Guid.Empty)
+        {
+            throw new CustomException("Booking id is required", null, 400);
+        }
+
+        var booking = await _dbContext.Bookings
+            .FirstOrDefaultAsync(b => b.Id == bookingId);
+
+        if (booking is null)
+        {
+            throw new CustomException("Booking not found", null, 404);
+        }
+
+        if (booking.UserId != userId)
+        {
+            throw new CustomException("You can only remove your own booking", null, 403);
+        }
+
+        _dbContext.Bookings.Remove(booking);
+        await _dbContext.SaveChangesAsync();
+    }
+
     private static bool IsUniqueViolation(DbUpdateException ex)
         => ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 

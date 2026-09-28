@@ -28,6 +28,11 @@ namespace LaundryBooking.Services
             return await _bookingRepository.CreateBooking(userId, buildingId, request);
         }
 
+        public async Task DeleteBooking(Guid userId, Guid bookingId)
+        {
+            await _bookingRepository.DeleteBookingForUser(userId, bookingId);
+        }
+
         public async Task<List<MachineDto>> GetMachinesForUserBuilding(Guid userId)
         {
             var buildingId = await RequireBuildingId(userId);

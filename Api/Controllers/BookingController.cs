@@ -45,8 +45,12 @@ namespace TenantApi.Laundry.Controllers
             => StatusCode(StatusCodes.Status501NotImplemented, new { message = NotMigrated });
 
         [HttpPost("edit")]
-        public IActionResult EditBookingById()
-            => StatusCode(StatusCodes.Status501NotImplemented, new { message = NotMigrated });
+        public async Task<IActionResult> EditBookingById([FromBody] EditBookingRequest request)
+        {
+            var userId = RequireUserId();
+            await _bookingService.DeleteBooking(userId, request.Id);
+            return Ok(new { message = "Booking removed" });
+        }
 
         [HttpPost("cancel")]
         public IActionResult CancelBookings()
