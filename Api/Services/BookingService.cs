@@ -18,14 +18,16 @@ namespace LaundryBooking.Services
 
         public async Task<List<BookingDto>> GetBookingsForUserBuilding(Guid userId, Guid? machineId = null)
         {
-            var buildingId = await RequireBuildingId(userId);
-            return await _bookingRepository.GetBookingsByBuildingId(buildingId, machineId);
+            Guid buildingId = await RequireBuildingId(userId);
+            List<BookingDto> bookings = await _bookingRepository.GetBookingsByBuildingId(buildingId, machineId);
+            return bookings;
         }
 
         public async Task<BookingDto> CreateBooking(Guid userId, CreateBookingRequest request)
         {
-            var buildingId = await RequireBuildingId(userId);
-            return await _bookingRepository.CreateBooking(userId, buildingId, request);
+            Guid buildingId = await RequireBuildingId(userId);
+            BookingDto booking = await _bookingRepository.CreateBooking(userId, buildingId, request);
+            return booking;
         }
 
         public async Task DeleteBooking(Guid userId, Guid bookingId)
@@ -35,13 +37,15 @@ namespace LaundryBooking.Services
 
         public async Task<int> CancelAllBookings(Guid userId)
         {
-            return await _bookingRepository.CancelAllBookingsForUser(userId);
+            int removed = await _bookingRepository.CancelAllBookingsForUser(userId);
+            return removed;
         }
 
         public async Task<List<MachineDto>> GetMachinesForUserBuilding(Guid userId)
         {
-            var buildingId = await RequireBuildingId(userId);
-            return await _bookingRepository.GetMachinesByBuildingId(buildingId);
+            Guid buildingId = await RequireBuildingId(userId);
+            List<MachineDto> machines = await _bookingRepository.GetMachinesByBuildingId(buildingId);
+            return machines;
         }
 
         private async Task<Guid> RequireBuildingId(Guid userId)
@@ -50,6 +54,11 @@ namespace LaundryBooking.Services
             if (buildingId is null)
             {
                 throw new CustomException("User is not linked to a building", null, 404);
+            }
+
+            if (buildingId.Value == Guid.Empty)
+            {
+                throw new CustomException("Building ID is empty", null, 404);
             }
 
             return buildingId.Value;

@@ -15,8 +15,6 @@ public class CreateBookingRequest
     [Required]
     public string Day { get; init; } = null!;
 
-    /// <summary>Single slot, e.g. "08:00-11:00".</summary>
-    public string? TimeSlot { get; init; }
 
     /// <summary>FE shape: ["08:00-11:00"]. First entry is used for V1.</summary>
     public List<string>? TimeSlots { get; init; }
@@ -26,11 +24,6 @@ public class CreateBookingRequest
     {
         get
         {
-            if (!string.IsNullOrWhiteSpace(TimeSlot))
-            {
-                return TimeSlot;
-            }
-
             if (TimeSlots is { Count: > 0 } && !string.IsNullOrWhiteSpace(TimeSlots[0]))
             {
                 return TimeSlots[0];

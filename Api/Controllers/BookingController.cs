@@ -18,31 +18,31 @@ namespace TenantApi.Laundry.Controllers
         [HttpGet("getAll")]
         public async Task<ActionResult<List<BookingDto>>> GetAllBookings([FromQuery] Guid? machineId = null)
         {
-            var userId = RequireUserId();
-            var bookings = await _bookingService.GetBookingsForUserBuilding(userId, machineId);
+            Guid userId = RequireUserId();
+            List<BookingDto> bookings = await _bookingService.GetBookingsForUserBuilding(userId, machineId);
             return Ok(bookings);
         }
 
         [HttpGet("getAllMachines")]
         public async Task<ActionResult<List<MachineDto>>> GetAllMachines()
         {
-            var userId = RequireUserId();
-            var machines = await _bookingService.GetMachinesForUserBuilding(userId);
+            Guid userId = RequireUserId();
+            List<MachineDto> machines = await _bookingService.GetMachinesForUserBuilding(userId);
             return Ok(machines);
         }
 
         [HttpPost("create")]
         public async Task<ActionResult<BookingDto>> CreateBooking([FromBody] CreateBookingRequest request)
         {
-            var userId = RequireUserId();
-            var booking = await _bookingService.CreateBooking(userId, request);
-            return CreatedAtAction(nameof(GetAllBookings), new { machineId = booking.MachineId }, booking);
+            Guid userId = RequireUserId();
+            BookingDto booking = await _bookingService.CreateBooking(userId, request);
+            return Ok(booking);
         }
 
         [HttpPost("edit")]
         public async Task<IActionResult> EditBookingById([FromBody] EditBookingRequest request)
         {
-            var userId = RequireUserId();
+            Guid userId = RequireUserId();
             await _bookingService.DeleteBooking(userId, request.Id);
             return Ok(new { message = "Booking removed" });
         }
@@ -50,8 +50,8 @@ namespace TenantApi.Laundry.Controllers
         [HttpPost("cancel")]
         public async Task<IActionResult> CancelBookings()
         {
-            var userId = RequireUserId();
-            var removed = await _bookingService.CancelAllBookings(userId);
+            Guid userId = RequireUserId();
+            int removed = await _bookingService.CancelAllBookings(userId);
             return Ok(new { message = "Bookings canceled", removed });
         }
 

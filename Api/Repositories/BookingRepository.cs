@@ -29,7 +29,8 @@ public class BookingRepository : IBookingRepository
 
         return await query
             .OrderBy(b => b.StartTime)
-            .Select(b => new BookingDto {
+            .Select(b => new BookingDto
+            {
                 Id = b.Id,
                 UserId = b.UserId,
                 BuildingId = b.BuildingId,
@@ -50,12 +51,14 @@ public class BookingRepository : IBookingRepository
         }
 
         _dbContext.Machines.AddRange(
-            new Machine {
+            new Machine
+            {
                 BuildingId = buildingId,
                 Name = MachineName.washing,
                 Status = MachineStatus.available
             },
-            new Machine {
+            new Machine
+            {
                 BuildingId = buildingId,
                 Name = MachineName.dryer,
                 Status = MachineStatus.available
@@ -71,7 +74,8 @@ public class BookingRepository : IBookingRepository
         return await _dbContext.Machines.AsNoTracking()
             .Where(m => m.BuildingId == buildingId)
             .OrderBy(m => m.Name)
-            .Select(m => new MachineDto {
+            .Select(m => new MachineDto
+            {
                 Id = m.Id,
                 BuildingId = m.BuildingId,
                 Name = m.Name.ToString(),
@@ -122,7 +126,8 @@ public class BookingRepository : IBookingRepository
             throw new CustomException("Machine is under maintenance", null, 403);
         }
 
-        var booking = new BookingPg {
+        var booking = new BookingPg
+        {
             UserId = userId,
             BuildingId = buildingId,
             MachineId = machine.Id,
@@ -201,7 +206,7 @@ public class BookingRepository : IBookingRepository
 
     private async Task<BuildingSettings> GetOrCreateBuildingSettings(Guid buildingId)
     {
-        var settings = await _dbContext.BuildingSettings
+        BuildingSettings? settings = await _dbContext.BuildingSettings
             .FirstOrDefaultAsync(s => s.BuildingId == buildingId);
 
         if (settings is not null)
@@ -218,7 +223,8 @@ public class BookingRepository : IBookingRepository
     private static bool IsUniqueViolation(DbUpdateException ex)
         => ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
-    private static BookingDto ToDto(BookingPg b) => new() {
+    private static BookingDto ToDto(BookingPg b) => new()
+    {
         Id = b.Id,
         UserId = b.UserId,
         BuildingId = b.BuildingId,
