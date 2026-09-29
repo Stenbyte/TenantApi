@@ -1,43 +1,236 @@
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using TenantApi.Dto;
+using TenantApi.Enums;
 using TenantApi.Exceptions;
+using TenantApi.Helpers;
 using TenantApi.Models;
 
 namespace TenantApi.Repository;
 
-class BookingRepository : IBookingRepository
+public class BookingRepository : IBookingRepository
 {
-    private static CustomException NotMigrated()
-        => new("Bookings not migrated to Postgres yet", null, 501);
+    private readonly TenantDbContext _dbContext;
 
-    public Task<List<Booking>> GetAllBookingsByBuildingId(User user)
-        => throw NotMigrated();
+    public BookingRepository(TenantDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
 
-    public Task<List<Booking>> GetAllBookingsByMachineId(User user, string machineId)
-        => throw NotMigrated();
+    public async Task<List<BookingDto>> GetBookingsByBuildingId(Guid buildingId, Guid? machineId = null)
+    {
+        var query = _dbContext.Bookings.AsNoTracking()
+            .Where(b => b.BuildingId == buildingId);
 
-    public Task<Booking> CreateBooking(Booking newBooking, string dbName)
-        => throw NotMigrated();
+        if (machineId.HasValue)
+        {
+            query = query.Where(b => b.MachineId == machineId.Value);
+        }
 
-    public Task<Booking> UpdateBooking(Booking existingBooking, string dbName)
-        => throw NotMigrated();
+        return await query
+            .OrderBy(b => b.StartTime)
+            .Select(b => new BookingDto
+            {
+                Id = b.Id,
+                UserId = b.UserId,
+                BuildingId = b.BuildingId,
+                MachineId = b.MachineId,
+                StartTime = b.StartTime,
+                EndTime = b.EndTime,
+                CreatedAt = b.CreatedAt
+            })
+            .ToListAsync();
+    }
 
-    public Task<Booking> GetBookingsByUserId(string userId, string dbName)
-        => throw NotMigrated();
+    public async Task EnsureDefaultMachines(Guid buildingId)
+    {
+        var hasAny = await _dbContext.Machines.AnyAsync(m => m.BuildingId == buildingId);
+        if (hasAny)
+        {
+            return;
+        }
 
-    public Task<Booking> FindByUserAndSlotId(string bookingSlotId, string userId, string dbName)
-        => throw NotMigrated();
+        _dbContext.Machines.AddRange(
+            new Machine
+            {
+                BuildingId = buildingId,
+                Name = MachineName.washing,
+                Status = MachineStatus.available
+            },
+            new Machine
+            {
+                BuildingId = buildingId,
+                Name = MachineName.dryer,
+                Status = MachineStatus.available
+            });
 
-    public Task<Booking> FindBookingsByUserId(string userId, string dbName)
-        => throw NotMigrated();
+        await _dbContext.SaveChangesAsync();
+    }
 
-    public Task<bool> CancelBooking(string userId, string dbName)
-        => throw NotMigrated();
+    public async Task<List<MachineDto>> GetMachinesByBuildingId(Guid buildingId)
+    {
+        await EnsureDefaultMachines(buildingId);
 
-    public Task<MachineModel> GetMachine(string dbName, string machineId)
-        => throw NotMigrated();
+        return await _dbContext.Machines.AsNoTracking()
+            .Where(m => m.BuildingId == buildingId)
+            .OrderBy(m => m.Name)
+            .Select(m => new MachineDto
+            {
+                Id = m.Id,
+                BuildingId = m.BuildingId,
+                Name = m.Name.ToString(),
+                Status = m.Status.ToString()
+            })
+            .ToListAsync();
+    }
 
-    public Task<List<MachineModel>> GetAllMachinesByBuildingId(User user)
-        => throw NotMigrated();
+    public async Task<BookingDto> CreateBooking(Guid userId, Guid buildingId, CreateBookingRequest request)
+    {
+        var (start, end) = BookingSlotTimes.ToUtcRange(request.Day, request.ResolvedTimeSlot);
 
-    public Task<MachineModel> CreateMachine(string dbName, MachineModel newMachine)
-        => throw NotMigrated();
+        if (end <= DateTime.UtcNow)
+        {
+            throw new CustomException("Cannot book a slot that has already ended", null, 400);
+        }
+
+        await EnsureDefaultMachines(buildingId);
+        await EnforceMaxBookings(userId, buildingId);
+
+        Machine? machine;
+        if (request.MachineId.HasValue)
+        {
+            machine = await _dbContext.Machines
+                .FirstOrDefaultAsync(m => m.Id == request.MachineId.Value && m.BuildingId == buildingId);
+
+            if (machine is null)
+            {
+                throw new CustomException("Machine not found for this building", null, 404);
+            }
+        }
+        else
+        {
+            // Temporary: landlord machine admin not built yet — pick first available.
+            machine = await _dbContext.Machines
+                .Where(m => m.BuildingId == buildingId && m.Status == MachineStatus.available)
+                .OrderBy(m => m.Name)
+                .FirstOrDefaultAsync();
+
+            if (machine is null)
+            {
+                throw new CustomException("No available machine in this building", null, 404);
+            }
+        }
+
+        if (machine.Status == MachineStatus.maintenance)
+        {
+            throw new CustomException("Machine is under maintenance", null, 403);
+        }
+
+        var booking = new BookingPg
+        {
+            UserId = userId,
+            BuildingId = buildingId,
+            MachineId = machine.Id,
+            StartTime = start,
+            EndTime = end,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _dbContext.Bookings.Add(booking);
+
+        try
+        {
+            await _dbContext.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            // DB unique (machine_id, start_time) — race-safe double-book guard
+            throw new CustomException("Time slot is already taken", null, 409);
+        }
+
+        return ToDto(booking);
+    }
+
+    public async Task DeleteBookingForUser(Guid userId, Guid bookingId)
+    {
+        if (bookingId == Guid.Empty)
+        {
+            throw new CustomException("Booking id is required", null, 400);
+        }
+
+        var booking = await _dbContext.Bookings
+            .FirstOrDefaultAsync(b => b.Id == bookingId);
+
+        if (booking is null)
+        {
+            throw new CustomException("Booking not found", null, 404);
+        }
+
+        if (booking.UserId != userId)
+        {
+            throw new CustomException("You can only remove your own booking", null, 403);
+        }
+
+        _dbContext.Bookings.Remove(booking);
+        await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<int> CancelAllBookingsForUser(Guid userId)
+    {
+        var bookings = await _dbContext.Bookings
+            .Where(b => b.UserId == userId)
+            .ToListAsync();
+
+        if (bookings.Count == 0)
+        {
+            return 0;
+        }
+
+        _dbContext.Bookings.RemoveRange(bookings);
+        await _dbContext.SaveChangesAsync();
+        return bookings.Count;
+    }
+
+    private async Task EnforceMaxBookings(Guid userId, Guid buildingId)
+    {
+        var settings = await GetOrCreateBuildingSettings(buildingId);
+
+        var count = await _dbContext.Bookings.CountAsync(b => b.UserId == userId);
+
+        if (count >= settings.MaxBookingsPerWeek)
+        {
+            // Exact string — FE toast matches this.
+            throw new CustomException("You can not add new reservation", null, 403);
+        }
+    }
+
+    private async Task<BuildingSettings> GetOrCreateBuildingSettings(Guid buildingId)
+    {
+        BuildingSettings? settings = await _dbContext.BuildingSettings
+            .FirstOrDefaultAsync(s => s.BuildingId == buildingId);
+
+        if (settings is not null)
+        {
+            return settings;
+        }
+
+        settings = new BuildingSettings { BuildingId = buildingId };
+        _dbContext.BuildingSettings.Add(settings);
+        await _dbContext.SaveChangesAsync();
+        return settings;
+    }
+
+    private static bool IsUniqueViolation(DbUpdateException ex)
+        => ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
+
+    private static BookingDto ToDto(BookingPg b) => new()
+    {
+        Id = b.Id,
+        UserId = b.UserId,
+        BuildingId = b.BuildingId,
+        MachineId = b.MachineId,
+        StartTime = b.StartTime,
+        EndTime = b.EndTime,
+        CreatedAt = b.CreatedAt
+    };
 }

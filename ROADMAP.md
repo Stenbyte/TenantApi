@@ -14,16 +14,18 @@ Delivery shape: **one web app** → responsive by screen size → later PWA. No 
 ## V1 — Booking core + Postgres + tenant allowlist
 
 - [x] Local Postgres setup re-verified (how to run, connection string, migrate) + README if missing
-- [ ] Mongo removed from runtime paths (API + Web talk Postgres only)
+- [x] Mongo removed from runtime paths (API + Web talk Postgres only)
 - [x] Refresh tokens stored/validated in Postgres
 - [x] Cookie auth flags verified (HttpOnly, Secure, SameSite)
-- [ ] Book + cancel slot end-to-end on Postgres
+- [x] Book + cancel slot end-to-end on Postgres
 - [ ] Double-booking prevented (constraint + concurrency) + tests
 - [ ] Shared-DB tenant key isolation + integration tests (no cross-landlord reads)
 - [ ] Landlord creates tenant accounts (invite/create; no open signup for tenants)
-- [ ] BuildingSettings: slot length, max bookings/week
+- [x] BuildingSettings: slot length, max bookings per user
 - [ ] API versioning basics
 - [ ] Web app versioning basics
+- [ ] FluentValidation on all request DTOs (booking + auth); drop mixed DataAnnotations on those DTOs
+- [ ] Exception middleware: client gets CustomException only; unexpected errors logged + opaque 500 (no stack/message leak; App Insights later)
 - [ ] Auth + booking isolation tests in CI locally
 - [ ] Landlord panel: manage tenants + view bookings
 - [ ] Core booking/auth usable on phone browser (responsive breakpoints; same app)

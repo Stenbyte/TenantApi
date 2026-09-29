@@ -1,4 +1,5 @@
-using TenantApi.Models;
+using TenantApi.Dto;
+using TenantApi.Exceptions;
 using TenantApi.Repository;
 using TenantApi.Services;
 
@@ -7,74 +8,60 @@ namespace LaundryBooking.Services
     public class BookingService : IBookingService
     {
         private readonly IBookingRepository _bookingRepository;
+        private readonly IUserRepository _userRepository;
 
-        public BookingService(IBookingRepository bookingRepository)
+        public BookingService(IBookingRepository bookingRepository, IUserRepository userRepository)
         {
             _bookingRepository = bookingRepository;
-        }
-        public async Task<List<Booking>> GetAllBookingsByBuildingId(User user)
-        {
-            return await _bookingRepository.GetAllBookingsByBuildingId(user);
-        }
-        public async Task<List<Booking>> GetAllBookingsByMachineId(User user, string machineId)
-        {
-            return await _bookingRepository.GetAllBookingsByMachineId(user, machineId);
+            _userRepository = userRepository;
         }
 
-        public async Task<Booking> CreateBooking(Booking newBooking, string dbName)
+        public async Task<List<BookingDto>> GetBookingsForUserBuilding(Guid userId, Guid? machineId = null)
         {
-            return await _bookingRepository.CreateBooking(newBooking, dbName);
-        }
-        public async Task<Booking> UpdateBooking(Booking existingBooking, string dbName)
-        {
-            return await _bookingRepository.UpdateBooking(existingBooking, dbName);
+            Guid buildingId = await RequireBuildingId(userId);
+            List<BookingDto> bookings = await _bookingRepository.GetBookingsByBuildingId(buildingId, machineId);
+            return bookings;
         }
 
-        public async Task<Booking> GetBookingsByUserId(string userId, string dbName)
+        public async Task<BookingDto> CreateBooking(Guid userId, CreateBookingRequest request)
         {
-            return await _bookingRepository.GetBookingsByUserId(userId, dbName);
+            Guid buildingId = await RequireBuildingId(userId);
+            BookingDto booking = await _bookingRepository.CreateBooking(userId, buildingId, request);
+            return booking;
         }
 
-
-        public async Task<Booking> FindByUserAndSlotId(string bookingSlotId, string userId, string dbName)
+        public async Task DeleteBooking(Guid userId, Guid bookingId)
         {
-            return await _bookingRepository.FindByUserAndSlotId(bookingSlotId, userId, dbName);
-        }
-        public async Task<Booking> FindBookingsByUserId(string userId, string dbName)
-        {
-            return await _bookingRepository.FindBookingsByUserId(userId, dbName);
+            await _bookingRepository.DeleteBookingForUser(userId, bookingId);
         }
 
-        public async Task<bool> CancelBooking(string userId, string dbName)
+        public async Task<int> CancelAllBookings(Guid userId)
         {
-            return await _bookingRepository.CancelBooking(userId, dbName);
+            int removed = await _bookingRepository.CancelAllBookingsForUser(userId);
+            return removed;
         }
 
-        public async Task<MachineModel> GetMachine(string dbName, string machineId)
+        public async Task<List<MachineDto>> GetMachinesForUserBuilding(Guid userId)
         {
-            return await _bookingRepository.GetMachine(dbName, machineId);
+            Guid buildingId = await RequireBuildingId(userId);
+            List<MachineDto> machines = await _bookingRepository.GetMachinesByBuildingId(buildingId);
+            return machines;
         }
 
-        public async Task<List<MachineModel>> GetAllMachinesByBuildingId(User user)
+        private async Task<Guid> RequireBuildingId(Guid userId)
         {
-            return await _bookingRepository.GetAllMachinesByBuildingId(user);
-        }
+            var buildingId = await _userRepository.GetBuildingIdForUser(userId);
+            if (buildingId is null)
+            {
+                throw new CustomException("User is not linked to a building", null, 404);
+            }
 
-        public async Task<MachineModel> CreateMachine(string dbName, MachineModel newMachine)
-        {
-            return await _bookingRepository.CreateMachine(dbName, newMachine);
-        }
+            if (buildingId.Value == Guid.Empty)
+            {
+                throw new CustomException("Building ID is empty", null, 404);
+            }
 
-        //         public async Task<T?> GetById<T>(string collectionName, string _id) where T : IEntity
-        //         {
-        //             var collection = GetCollection<T>(collectionName);
-        //             return await collection.Find(x => x._id == _id).FirstOrDefaultAsync();
-        //         }
-        // 
-        //         public async Task Create<T>(string collectionName, T entity)
-        //         {
-        //             var collection = GetCollection<T>(collectionName);
-        //             await collection.InsertOneAsync(entity);
-        //         }
-    };
+            return buildingId.Value;
+        }
+    }
 }

@@ -8,4 +8,5 @@ public interface IUserRepository
     Task<UserPg?> FindUserByEmail(string email);
     Task<UserPg?> FindUserByRefreshToken(string refreshToken);
     Task UpdateUser(UserPg userToUpdate);
+    Task<Guid?> GetBuildingIdForUser(Guid userId);
 }

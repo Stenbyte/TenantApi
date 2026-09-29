@@ -1,18 +1,13 @@
-using TenantApi.Models;
+using TenantApi.Dto;
 
 namespace TenantApi.Repository;
 
 public interface IBookingRepository
 {
-    Task<List<Booking>> GetAllBookingsByBuildingId(User user);
-    Task<List<Booking>> GetAllBookingsByMachineId(User user, string machineId);
-    Task<Booking> CreateBooking(Booking newBooking, string dbName);
-    Task<Booking> UpdateBooking(Booking existingBooking, string dbName);
-    Task<Booking> GetBookingsByUserId(string userId, string dbName);
-    Task<Booking> FindByUserAndSlotId(string bookingSlotId, string userId, string dbName);
-    Task<Booking> FindBookingsByUserId(string userId, string dbName);
-    Task<bool> CancelBooking(string userId, string dbName);
-    Task<MachineModel> GetMachine(string dbName, string machineId);
-    Task<List<MachineModel>> GetAllMachinesByBuildingId(User user);
-    Task<MachineModel> CreateMachine(string dbName, MachineModel newMachine);
+    Task<List<BookingDto>> GetBookingsByBuildingId(Guid buildingId, Guid? machineId = null);
+    Task<BookingDto> CreateBooking(Guid userId, Guid buildingId, CreateBookingRequest request);
+    Task DeleteBookingForUser(Guid userId, Guid bookingId);
+    Task<int> CancelAllBookingsForUser(Guid userId);
+    Task<List<MachineDto>> GetMachinesByBuildingId(Guid buildingId);
+    Task EnsureDefaultMachines(Guid buildingId);
 }

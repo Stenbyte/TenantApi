@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -10,9 +11,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace TenantApi.Migrations
 {
     [DbContext(typeof(TenantDbContext))]
-    partial class TenantDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260928151335_AddMachinesAndBookings")]
+    partial class AddMachinesAndBookings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -86,29 +89,6 @@ namespace TenantApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("buildings");
-                });
-
-            modelBuilder.Entity("TenantApi.Models.BuildingSettings", b =>
-                {
-                    b.Property<Guid>("BuildingId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("building_id");
-
-                    b.Property<int>("MaxBookingsPerWeek")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(3)
-                        .HasColumnName("max_bookings_per_week");
-
-                    b.Property<int>("SlotLengthMinutes")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(180)
-                        .HasColumnName("slot_length_minutes");
-
-                    b.HasKey("BuildingId");
-
-                    b.ToTable("building_settings");
                 });
 
             modelBuilder.Entity("TenantApi.Models.Machine", b =>
@@ -256,17 +236,6 @@ namespace TenantApi.Migrations
                     b.Navigation("Machine");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("TenantApi.Models.BuildingSettings", b =>
-                {
-                    b.HasOne("TenantApi.Models.Building", "Building")
-                        .WithOne()
-                        .HasForeignKey("TenantApi.Models.BuildingSettings", "BuildingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Building");
                 });
 
             modelBuilder.Entity("TenantApi.Models.Machine", b =>

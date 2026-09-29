@@ -1,42 +1,36 @@
 {
-    "Logging": {
-      "LogLevel": {
-        "Default": "Information",
-        "Microsoft.AspNetCore": "Warning"
-      }
-    },
-    "AllowedHosts": "*",
-    "AllowedOrigins": "",
-    "MongoDB": {
-      "ConnectionString": "",
-      "DatabaseName": "",
-      "UsersCollectionName": ""
-    },
-    "JwtSettings": {
-      "Secret": "", 
-      "Issuer": "",
-      "Audience": "",
-      "AccessTokenExpirationMinutes": ,
-      "RefreshTokenExpirationDays":
-    },
-    "IpRateLimiting": {
-      "EnableEndpointRateLimiting": true,
-      "StackBlockedRequests": false,
-      "RealIpHeader": "X-Real-IP",
-      "ClientIdHeader": "X-ClientId",
-      "HttpStatusCode": 429,
-      "GeneralRules": [
-        {
-          "Endpoint": "*",
-          "Period": "1m",
-          "Limit": 20
-        },
-        {
-          "Endpoint": "*:/api/*",
-          "Period": "1m",
-          "Limit": 20
-        }
-      ]
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
     }
+  },
+  "AllowedHosts": "*",
+  "AllowedOrigins": "",
+  "JwtSettings": {
+    "Secret": "",
+    "Issuer": "",
+    "Audience": "",
+    "AccessTokenExpirationMinutes": 150,
+    "RefreshTokenExpirationDays": 12
+  },
+  "IpRateLimiting": {
+    "EnableEndpointRateLimiting": true,
+    "StackBlockedRequests": false,
+    "RealIpHeader": "X-Real-IP",
+    "ClientIdHeader": "X-ClientId",
+    "HttpStatusCode": 429,
+    "GeneralRules": [
+      {
+        "Endpoint": "*",
+        "Period": "1m",
+        "Limit": 20
+      },
+      {
+        "Endpoint": "*:/api/*",
+        "Period": "1m",
+        "Limit": 20
+      }
+    ]
   }
-  
+}
