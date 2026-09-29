@@ -24,6 +24,7 @@ Delivery shape: **one web app** → responsive by screen size → later PWA. No 
 - [x] BuildingSettings: slot length, max bookings per user
 - [ ] API versioning basics
 - [ ] Web app versioning basics
+- [ ] FluentValidation on all request DTOs (booking + auth); drop mixed DataAnnotations on those DTOs˝
 - [ ] Auth + booking isolation tests in CI locally
 - [ ] Landlord panel: manage tenants + view bookings
 - [ ] Core booking/auth usable on phone browser (responsive breakpoints; same app)
